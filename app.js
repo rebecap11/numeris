@@ -249,7 +249,10 @@ function renderChart(codeValues) {
           ticks: { stepSize: 1, color: "#81798d" },
           grid: { color: "rgba(233, 227, 238, .8)" }
         },
-        x: { ticks: { color: "#81798d" }, grid: { display: false } }
+        x: {
+          ticks: { display: false },
+          grid: { display: false }
+            }
       },
       onClick: (_event, elements) => {
         if (!elements.length) return;
