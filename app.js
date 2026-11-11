@@ -2,9 +2,13 @@
 "use strict";
 
 let meaningsData = {};
+let meaningsFailed = false;
+let meaningsReady = null;
 let evolutionChart = null;
 let currentSelectedElement = null;
-let lastResult = null;
+let lastFocused = null;
+
+const NO_MEANING = "Não existe interpretação definida para este valor.";
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -15,9 +19,11 @@ function sumDigitsOnce(value) {
 }
 
 function parseLocalDate(value) {
-  // Evita o desvio de um dia causado por new Date("AAAA-MM-DD") em fusos horários.
+  // setFullYear evita que anos < 100 sejam interpretados como 19xx.
   const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
+  const date = new Date(2000, 0, 1, 12, 0, 0, 0);
+  date.setFullYear(year, month - 1, day);
+  return date;
 }
 
 function calculateNumerology(birthDate) {
@@ -31,7 +37,8 @@ function calculateNumerology(birthDate) {
   const sumRaw = [...dateDigits].reduce((sum, digit) => sum + Number(digit), 0);
   const sumOnce = sumDigitsOnce(sumRaw);
   const firstDigitOfDay = Number(String(day)[0]);
-  const thirdRaw = sumRaw - 2 * firstDigitOfDay;
+  // Se der negativo, passa a positivo (ex.: -6 → 6).
+  const thirdRaw = Math.abs(sumRaw - 2 * firstDigitOfDay);
   const thirdReduced = sumDigitsOnce(thirdRaw);
 
   const numbersUsed = [
@@ -67,13 +74,14 @@ function setStatus(message, isError = false) {
 
 async function loadMeanings() {
   try {
-    const response = await fetch("meanings.json", { cache: "no-cache" });
+    const response = await fetch("meanings.json");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     meaningsData = await response.json();
+    meaningsFailed = false;
   } catch (error) {
     console.warn("Não foi possível carregar meanings.json:", error);
     meaningsData = {};
-    setStatus("Mapa calculado. As interpretações não estão disponíveis porque meanings.json não foi encontrado.", true);
+    meaningsFailed = true;
   }
 }
 
@@ -82,26 +90,43 @@ function openPanel(element, title, description, symbol = "✳") {
   currentSelectedElement = element || null;
   if (currentSelectedElement) currentSelectedElement.classList.add("selected");
 
+  const panel = $("#right-panel");
+  if (!panel.classList.contains("open")) lastFocused = document.activeElement;
+
   $("#panel-title").textContent = title || "Interpretação";
-  $("#description-text").replaceChildren();
-  const heading = document.createElement("h3");
-  heading.textContent = title || "Interpretação";
-  const paragraph = document.createElement("p");
-  paragraph.textContent = description || "Significado ainda não definido. Adiciona esta interpretação em meanings.json.";
-  $("#description-text").append(heading, paragraph);
+
+  const parts = (description || NO_MEANING)
+    .split(/\n\s*\n/)
+    .map((text) => text.trim())
+    .filter(Boolean);
+  const paragraphs = parts.map((text) => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    return p;
+  });
+  $("#description-text").replaceChildren(...paragraphs);
   $("#interpretation-number").textContent = symbol;
-  $("#right-panel").classList.add("open");
-  $("#right-panel").setAttribute("aria-hidden", "false");
+
+  panel.inert = false;
+  panel.classList.add("open");
   $("#panel-backdrop").classList.add("visible");
+  document.body.style.overflow = "hidden";
   $("#close-panel").focus();
 }
 
-function closePanel() {
-  $("#right-panel").classList.remove("open");
-  $("#right-panel").setAttribute("aria-hidden", "true");
+function closePanel(restoreFocus = true) {
+  const panel = $("#right-panel");
+  const wasOpen = panel.classList.contains("open");
+  panel.classList.remove("open");
+  panel.inert = true;
   $("#panel-backdrop").classList.remove("visible");
+  document.body.style.overflow = "";
   if (currentSelectedElement) currentSelectedElement.classList.remove("selected");
   currentSelectedElement = null;
+  if (wasOpen && restoreFocus && lastFocused && document.contains(lastFocused)) {
+    lastFocused.focus();
+  }
+  lastFocused = null;
 }
 
 function findMeaning(list, number, occurrences) {
@@ -112,8 +137,8 @@ function findMeaning(list, number, occurrences) {
   ) || null;
 }
 
-function showMeaning(element, item, fallback, symbol) {
-  openPanel(element, item?.title || fallback, item?.description || "Significado ainda não definido. Podes acrescentá-lo em meanings.json.", symbol);
+function showMeaning(element, item, fallbackTitle, symbol) {
+  openPanel(element, item?.title || fallbackTitle, item?.description || NO_MEANING, symbol);
 }
 
 function handleMatrixClick(number, occurrences, element) {
@@ -158,11 +183,15 @@ function renderMatrix(counts) {
     const cell = $(`#c${number}`);
     const count = counts[number];
     cell.replaceChildren();
-    cell.append(document.createTextNode(count ? String(number).repeat(count) : "0"));
-    const small = document.createElement("small");
-    small.textContent = `${count} ${count === 1 ? "ocorrência" : "ocorrências"}`;
-    cell.appendChild(small);
-    cell.setAttribute("aria-label", `Número ${number}, ${count} ocorrências`);
+
+    const big = document.createElement("span");
+    big.className = count === 0 ? "matrix-digit matrix-zero" : "matrix-digit";
+    big.textContent = count === 0 ? "0" : String(number).repeat(count);
+    // Reduz o tamanho da letra quando há muitas ocorrências, para não transbordar.
+    big.style.fontSize = count > 7 ? ".85rem" : count > 5 ? "1rem" : count > 3 ? "1.25rem" : "";
+    cell.appendChild(big);
+
+    cell.setAttribute("aria-label", `Número ${number}, ${count} ${count === 1 ? "ocorrência" : "ocorrências"}`);
     cell.onclick = () => handleMatrixClick(number, count, cell);
   }
 }
@@ -205,10 +234,12 @@ function buildEvolutionGrid(birthDate, codeValues) {
 function renderChart(codeValues) {
   const canvas = $("#evolutionChart");
   if (typeof Chart === "undefined") {
-    canvas.replaceWith(Object.assign(document.createElement("p"), {
-      className: "microcopy",
-      textContent: "O gráfico não ficou disponível. Verifica a ligação à internet e atualiza a página."
-    }));
+    if (canvas) {
+      canvas.replaceWith(Object.assign(document.createElement("p"), {
+        className: "microcopy",
+        textContent: "O gráfico não ficou disponível. Verifica a ligação à internet e atualiza a página."
+      }));
+    }
     return;
   }
   if (evolutionChart) evolutionChart.destroy();
@@ -248,7 +279,7 @@ function renderChart(codeValues) {
         x: {
           ticks: { display: false },
           grid: { display: false }
-            }
+        }
       },
       onClick: (_event, elements) => {
         if (!elements.length) return;
@@ -261,13 +292,20 @@ function renderChart(codeValues) {
 
 function calculateAndRender(dateValue) {
   const birthDate = parseLocalDate(dateValue);
-  if (Number.isNaN(birthDate.getTime()) || birthDate > new Date()) {
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+
+  if (Number.isNaN(birthDate.getTime()) || birthDate > endOfToday) {
     setStatus("Escolhe uma data válida que não esteja no futuro.", true);
     return;
   }
+  if (birthDate.getFullYear() < 1900) {
+    setStatus("Escolhe uma data a partir do ano 1900.", true);
+    return;
+  }
+
   const result = calculateNumerology(birthDate);
   const codeValues = getEvolutionCode(birthDate);
-  lastResult = result;
 
   $("#birthdate-summary").textContent = birthDate.toLocaleDateString("pt-PT", {
     day: "numeric", month: "long", year: "numeric"
@@ -277,20 +315,35 @@ function calculateAndRender(dateValue) {
   buildEvolutionGrid(birthDate, codeValues);
   renderChart(codeValues);
   $("#results-section").hidden = false;
-  closePanel();
-  setStatus("O teu mapa está pronto. Seleciona qualquer número para explorar a leitura.");
+  closePanel(false);
+
+  if (meaningsFailed) {
+    setStatus("Mapa calculado, mas as interpretações não estão disponíveis (meanings.json não foi encontrado).", true);
+  } else {
+    setStatus("O teu mapa está pronto. Seleciona qualquer número para explorar a leitura.");
+  }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await loadMeanings();
+document.addEventListener("DOMContentLoaded", () => {
+  // Começa a carregar as interpretações logo à partida.
+  meaningsReady = loadMeanings();
 
-  $("#numerology-form").addEventListener("submit", (event) => {
+  $("#right-panel").inert = true;
+
+  // Limites do campo de data (componentes locais, não UTC).
+  const today = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  $("#birthdate").max = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  $("#birthdate").min = "1900-01-01";
+
+  $("#numerology-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const value = $("#birthdate").value;
     if (!value) {
       setStatus("Introduz primeiro a tua data de nascimento.", true);
       return;
     }
+    await meaningsReady;
     calculateAndRender(value);
   });
 
@@ -300,9 +353,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("#btn-grafico-info").setAttribute("aria-expanded", String(!panel.hidden));
   });
 
-  $("#close-panel").addEventListener("click", closePanel);
-  $("#panel-backdrop").addEventListener("click", closePanel);
+  $("#close-panel").addEventListener("click", () => closePanel());
+  $("#panel-backdrop").addEventListener("click", () => closePanel());
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closePanel();
+    if (event.key === "Escape" && $("#right-panel").classList.contains("open")) closePanel();
   });
 });
