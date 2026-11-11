@@ -3,15 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#211a31">
-  <meta name="description" content="Numeris — explora os teus números e ciclos pessoais.">
-  <title>Numeris — Mapa numerológico</title>
+  <meta name="theme-color" content="#4d356e">
+  <meta name="description" content="Numeris - explora os teus números e ciclos pessoais.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Numeris - Mapa numerológico">
+  <meta property="og:description" content="Descobre o teu mapa numerológico a partir da data de nascimento.">
+  <meta property="og:url" content="https://numeris.becapasarica.workers.dev/">
+  <meta name="twitter:card" content="summary">
+  <title>Numeris</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
   <script src="app.js" defer></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234d356e'/><text x='50' y='70' font-size='62' font-family='Georgia,serif' fill='white' text-anchor='middle'>N</text></svg>">
 </head>
 <body>
   <div class="app-shell">
@@ -51,16 +57,16 @@
           </article>
           <article class="card matrix-card">
             <div class="card-heading"><div><p class="eyebrow">DISTRIBUIÇÃO</p><h3>Matriz</h3></div><span class="heading-symbol">▦</span></div>
-            <div class="matrix-grid" aria-label="Matriz de ocorrências dos números de 1 a 9">
-              <button class="matrix-cell" type="button" data-number="1" id="c1">1 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="2" id="c2">2 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="3" id="c3">3 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="4" id="c4">4 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="5" id="c5">5 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="6" id="c6">6 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="7" id="c7">7 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="8" id="c8">8 <small>0 ocorrências</small></button>
-              <button class="matrix-cell" type="button" data-number="9" id="c9">9 <small>0 ocorrências</small></button>
+            <div class="matrix-grid" role="group" aria-label="Matriz de ocorrências dos números de 1 a 9">
+              <button class="matrix-cell" type="button" id="c1">1</button>
+              <button class="matrix-cell" type="button" id="c4">4</button>
+              <button class="matrix-cell" type="button" id="c7">7</button>
+              <button class="matrix-cell" type="button" id="c2">2</button>
+              <button class="matrix-cell" type="button" id="c5">5</button>
+              <button class="matrix-cell" type="button" id="c8">8</button>
+              <button class="matrix-cell" type="button" id="c3">3</button>
+              <button class="matrix-cell" type="button" id="c6">6</button>
+              <button class="matrix-cell" type="button" id="c9">9</button>
             </div>
             <p class="microcopy">Toca numa célula para consultar o significado dessa frequência.</p>
           </article>
@@ -80,7 +86,7 @@
           <p class="microcopy timeline-intro">Cada coluna corresponde a um subciclo. Seleciona o número do cabeçalho para ler a interpretação.</p>
           <div id="evolution-grid-container" class="evolution-grid"></div>
         </article>
-        <p class="disclaimer">A numerologia é uma prática simbólica e interpretativa, não um método científico nem uma previsão garantida do futuro.</p>
+        <p class="disclaimer">Ferramenta desenvolvida por Rebeca Pasarica. A versão atual é apenas um protótipo.</p>
       </section>
     </main>
   </div>
