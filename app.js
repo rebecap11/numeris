@@ -12,6 +12,7 @@ const $ = (selector) => document.querySelector(selector);
 function sumDigitsOnce(value) {
   let n = Math.abs(Math.trunc(Number(value) || 0));
   while (n >= 10) {
+    if (n === 10 || n === 11 || n === 12) break;
     n = String(n).split("").reduce((sum, digit) => sum + Number(digit), 0);
   }
   return n;
