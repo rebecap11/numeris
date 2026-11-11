@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#211a31">
+  <meta name="description" content="Numeris — explora os teus números e ciclos pessoais.">
+  <title>Numeris — Mapa numerológico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Numeris, início"><span class="brand-mark">N</span><span>numeris</span></a>
+      <span class="topbar-note">O teu mapa em números</span>
+    </header>
+
+    <main class="main-content">
+      <section class="hero">
+        <p class="eyebrow">NUMEROLOGIA · AUTOCONHECIMENTO</p>
+        <h1>Descobre o teu <em>mapa</em>.</h1>
+        <p class="hero-copy">Uma leitura simbólica da tua data de nascimento, dos teus números e dos ciclos ao longo do tempo.</p>
+      </section>
+
+      <form id="numerology-form" class="birth-form">
+        <div class="field">
+          <label for="birthdate">A tua data de nascimento</label>
+          <input type="date" id="birthdate" name="birthdate" required>
+        </div>
+        <button type="submit" id="btn-calculate"><span>Calcular mapa</span><span aria-hidden="true">↗</span></button>
+      </form>
+      <p class="form-hint">A data é utilizada apenas para gerar o mapa nesta página.</p>
+      <p id="status-message" class="status-message" role="status" aria-live="polite">Introduz a tua data para começar.</p>
+
+      <section id="results-section" class="results-section" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">A TUA LEITURA</p><h2>O teu mapa numerológico</h2></div>
+          <span id="birthdate-summary" class="date-chip"></span>
+        </div>
+
+        <div class="overview-grid">
+          <article class="card numbers-card">
+            <div class="card-heading"><div><p class="eyebrow">BASE DO MAPA</p><h3>Números utilizados</h3></div><span class="heading-symbol">✳</span></div>
+            <div id="numbers-used-container" class="number-list"></div>
+            <p class="microcopy">Seleciona um número para explorar a sua interpretação.</p>
+          </article>
+          <article class="card matrix-card">
+            <div class="card-heading"><div><p class="eyebrow">DISTRIBUIÇÃO</p><h3>Matriz</h3></div><span class="heading-symbol">▦</span></div>
+            <div class="matrix-grid" aria-label="Matriz de ocorrências dos números de 1 a 9">
+              <button class="matrix-cell" type="button" data-number="1" id="c1">1 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="2" id="c2">2 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="3" id="c3">3 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="4" id="c4">4 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="5" id="c5">5 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="6" id="c6">6 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="7" id="c7">7 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="8" id="c8">8 <small>0 ocorrências</small></button>
+              <button class="matrix-cell" type="button" data-number="9" id="c9">9 <small>0 ocorrências</small></button>
+            </div>
+            <p class="microcopy">Toca numa célula para consultar o significado dessa frequência.</p>
+          </article>
+        </div>
+
+        <article class="card chart-card">
+          <div class="card-heading">
+            <div><p class="eyebrow">RITMO PESSOAL</p><h3>Evolução dos subciclos</h3></div>
+            <button type="button" class="info-btn" id="btn-grafico-info" aria-expanded="false" aria-controls="grafico-info-panel" aria-label="Informação sobre o gráfico">i</button>
+          </div>
+          <div id="grafico-info-panel" class="info-panel" hidden>Seleciona um ponto do gráfico para abrir a interpretação do subciclo correspondente. Esta visualização segue o método de cálculo já utilizado na tua versão original.</div>
+          <div class="chart-wrap"><canvas id="evolutionChart" aria-label="Gráfico dos subciclos" role="img"></canvas></div>
+        </article>
+
+        <article class="card timeline-card">
+          <div class="card-heading"><div><p class="eyebrow">LINHA DO TEMPO</p><h3>Grelha de evolução temporal</h3></div></div>
+          <p class="microcopy timeline-intro">Cada coluna corresponde a um subciclo. Seleciona o número do cabeçalho para ler a interpretação.</p>
+          <div id="evolution-grid-container" class="evolution-grid"></div>
+        </article>
+        <p class="disclaimer">A numerologia é uma prática simbólica e interpretativa, não um método científico nem uma previsão garantida do futuro.</p>
+      </section>
+    </main>
+  </div>
+
+  <div class="panel-backdrop" id="panel-backdrop"></div>
+  <aside id="right-panel" class="right-panel" aria-labelledby="panel-title" aria-hidden="true">
+    <div class="right-panel-header">
+      <div><p class="eyebrow">EXPLORAR SIGNIFICADO</p><h2 id="panel-title">Interpretação</h2></div>
+      <button id="close-panel" class="close-btn" type="button" aria-label="Fechar interpretação">×</button>
+    </div>
+    <div class="right-panel-body">
+      <div class="interpretation-number" id="interpretation-number">✳</div>
+      <div id="description-text" aria-live="polite">Seleciona um número para ver a interpretação.</div>
+    </div>
+  </aside>
+</body>
+</html>
