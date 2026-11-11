@@ -1,5 +1,4 @@
-/* Numeris — lógica da aplicação.
-   Os cálculos mantêm as fórmulas da versão original; a interface foi reorganizada. */
+/* Numeris — lógica da aplicação. */
 "use strict";
 
 let meaningsData = {};
