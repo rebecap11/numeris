@@ -158,7 +158,7 @@ function renderMatrix(counts) {
     const cell = $(`#c${number}`);
     const count = counts[number];
     cell.replaceChildren();
-    cell.append(document.createTextNode(count ? String(number).repeat(count) : String(number)));
+    cell.append(document.createTextNode(count ? String(number).repeat(count) : "0"));
     const small = document.createElement("small");
     small.textContent = `${count} ${count === 1 ? "ocorrência" : "ocorrências"}`;
     cell.appendChild(small);
